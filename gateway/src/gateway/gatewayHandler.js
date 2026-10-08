@@ -71,15 +71,21 @@ const gatewayHandler = async (req, res) => {
   const startTime = Date.now();
 
   try {
+    const headersToForward = {
+      'Content-Type': req.headers['content-type'] || 'application/json',
+      'X-Request-ID': req.requestId // Forward to backend
+    };
+
+    if (req.user && req.user.sub) {
+      headersToForward['x-user-id'] = req.user.sub;
+    }
+
     const response = await axios({
       method: req.method,
       url: targetUrl,
       data: req.body,
       params: req.query,
-      headers: {
-        'Content-Type': req.headers['content-type'] || 'application/json',
-        'X-Request-ID': req.requestId // Forward to backend
-      },
+      headers: headersToForward,
       timeout: 10000,
     });
 

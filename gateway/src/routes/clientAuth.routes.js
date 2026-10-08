@@ -47,7 +47,7 @@ router.post('/register', async (req, res) => {
 
     // Validate all custom data constraints
     for (const field of customFieldsConfig) {
-      const value = customData[field.name];
+      const value = req.body[field.name];
       
       if (field.isRequired && (value === undefined || value === null || value === '')) {
         return res.status(400).json({ success: false, message: `Missing required field: ${field.name}` });
@@ -57,9 +57,9 @@ router.post('/register', async (req, res) => {
         const typeOfValue = typeof value;
         if (typeOfValue !== field.dataType) {
           if (field.dataType === 'number' && !isNaN(Number(value))) {
-            customData[field.name] = Number(value);
+            if (field.name !== 'password') customData[field.name] = Number(value);
           } else if (field.dataType === 'boolean' && (value === 'true' || value === 'false')) {
-            customData[field.name] = value === 'true';
+            if (field.name !== 'password') customData[field.name] = value === 'true';
           } else {
             return res.status(400).json({ success: false, message: `Invalid type for field ${field.name}. Expected ${field.dataType}` });
           }
@@ -90,9 +90,9 @@ router.post('/register', async (req, res) => {
 
     const payload = {
       sub: user._id.toString(),
+      projectId: req.project._id.toString(),
       [primaryField.name]: user.identityKey,
-      role: user.role,
-      ...customData
+      role: user.role
     };
 
     const token = jwt.sign(payload, secret, { expiresIn: '7d' });
@@ -137,9 +137,9 @@ router.post('/login', async (req, res) => {
 
     const payload = {
       sub: user._id.toString(),
+      projectId: req.project._id.toString(),
       [primaryField.name]: user.identityKey,
-      role: user.role,
-      ...(user.customData ? Object.fromEntries(user.customData) : {})
+      role: user.role
     };
 
     const token = jwt.sign(payload, secret, { expiresIn: '7d' });
